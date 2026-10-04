@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>极目 JimuControl · 个人远程控制 · 端到端加密</title>
+<meta name="description" content="极目 JimuControl：用手机或平板远程控制 Windows 电脑。端到端加密，支持局域网直连与 ZeroTier 跨网段组网，免费公开、自由使用，无需账号。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M4 32c0 0 12-18 28-18s28 18 28 18-12 18-28 18S4 32 4 32z' fill='%2322D3EE'/><circle cx='32' cy='32' r='10' fill='%230B1220'/><circle cx='32' cy='32' r='4.5' fill='%232F7CF6'/></svg>">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#0A0F1A; --bg2:#0B1220; --surface:#121B2D; --surface2:#16213A;
+  --border:#23314D; --border2:#2C3D5E;
+  --cyan:#22D3EE; --cyan-dim:#0E9DB5; --blue:#2F7CF6;
+  --txt:#E9EFF8; --sub:#9AA8BE; --faint:#5E6E88;
+  --ok:#34D399; --radius:16px; --maxw:1120px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--txt);line-height:1.7;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+section{padding:88px 0;position:relative}
+.eyebrow{color:var(--cyan);font-size:13px;font-weight:700;letter-spacing:.14em;margin-bottom:14px}
+h2.title{font-size:clamp(26px,3.6vw,38px);font-weight:900;letter-spacing:.01em;margin-bottom:14px}
+p.lead{color:var(--sub);font-size:17px;max-width:680px}
+.center{text-align:center}.center p.lead{margin:0 auto}
+
+/* 导航 */
+header.nav{position:sticky;top:0;z-index:50;background:rgba(10,15,26,.82);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;gap:14px;height:64px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:19px;letter-spacing:.04em}
+.brand svg{width:30px;height:30px}
+.brand small{font-weight:500;color:var(--sub);font-size:12px;letter-spacing:.08em}
+.nav-links{display:flex;gap:26px;margin-left:auto;font-size:15px;color:var(--sub);font-weight:500}
+.nav-links a{transition:color .2s}.nav-links a:hover{color:var(--cyan)}
+.nav-cta{background:var(--blue);color:#fff;padding:9px 18px;border-radius:10px;font-weight:700;font-size:14px;
+  transition:filter .2s,transform .2s}.nav-cta:hover{filter:brightness(1.1)}
+@media(max-width:760px){.nav-links{display:none}}
+
+/* Hero */
+.hero{padding:96px 0 84px;text-align:center;
+  background:radial-gradient(900px 480px at 50% -8%,rgba(34,211,238,.16),transparent 60%),
+             radial-gradient(700px 420px at 82% 8%,rgba(47,124,246,.12),transparent 60%)}
+.hero-logo{width:104px;height:104px;margin:0 auto 26px;filter:drop-shadow(0 0 34px rgba(34,211,238,.45))}
+.hero h1{font-size:clamp(52px,9vw,92px);font-weight:900;letter-spacing:.12em;line-height:1}
+.hero .tag{margin-top:18px;color:var(--sub);font-size:clamp(16px,2.4vw,20px);letter-spacing:.18em}
+.hero .value{margin:22px auto 0;max-width:600px;color:var(--sub);font-size:16px}
+.cta-row{display:flex;gap:16px;justify-content:center;margin-top:38px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:15px 30px;border-radius:13px;
+  font-weight:700;font-size:16px;cursor:pointer;border:1px solid transparent;transition:transform .15s,filter .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#4f93ff);color:#fff;
+  box-shadow:0 12px 30px rgba(47,124,246,.32)}
+.btn-cyan{background:linear-gradient(135deg,#13BFD9,var(--cyan));color:#06222B;
+  box-shadow:0 12px 30px rgba(34,211,238,.28)}
+.btn-ghost{background:var(--surface);border-color:var(--border2);color:var(--txt)}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn svg{width:20px;height:20px}
+.hero-meta{margin-top:26px;color:var(--faint);font-size:13.5px;display:flex;gap:22px;justify-content:center;flex-wrap:wrap}
+.hero-meta span{display:inline-flex;align-items:center;gap:7px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+
+/* 连接方式 */
+.conn-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:44px}
+.conn-card{background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--border);
+  border-radius:var(--radius);padding:30px;position:relative;overflow:hidden}
+.conn-card .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;
+  background:rgba(34,211,238,.12);color:var(--cyan);margin-bottom:18px}
+.conn-card h3{font-size:20px;font-weight:700;margin-bottom:9px}
+.conn-card p{color:var(--sub);font-size:15px}
+.conn-card .badge{position:absolute;top:24px;right:24px;font-size:12px;color:var(--faint);
+  border:1px solid var(--border2);padding:3px 10px;border-radius:20px}
+@media(max-width:720px){.conn-grid{grid-template-columns:1fr}}
+
+/* 功能网格 */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:46px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;
+  transition:border-color .2s,transform .2s}
+.feat:hover{border-color:var(--cyan-dim);transform:translateY(-3px)}
+.feat .fi{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;margin-bottom:14px;
+  background:rgba(47,124,246,.13);color:var(--cyan)}
+.feat h4{font-size:16.5px;font-weight:700;margin-bottom:6px}
+.feat p{color:var(--sub);font-size:14px}
+@media(max-width:900px){.feat-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.feat-grid{grid-template-columns:1fr}}
+
+/* 下载 */
+.dl{background:linear-gradient(180deg,#0C1424,#0A0F1A);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.dl-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:22px;margin-top:44px}
+.dl-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:32px}
+.dl-card.win{border-color:rgba(47,124,246,.4)}
+.dl-card.android{border-color:rgba(34,211,238,.4)}
+.dl-head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.dl-head .os-ico{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:24px}
+.win .os-ico{background:rgba(47,124,246,.16);color:#7aa6ff}
+.android .os-ico{background:rgba(34,211,238,.14);color:var(--cyan)}
+.dl-head h3{font-size:21px;font-weight:800}
+.dl-ver{color:var(--sub);font-size:14px;margin:6px 0 22px}
+.dl-ver b{color:var(--cyan);font-weight:700}
+.dl-actions{display:flex;flex-direction:column;gap:12px}
+.dl-btn{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;
+  border-radius:12px;font-weight:700;font-size:15px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--txt);cursor:pointer;transition:border-color .2s,background .2s}
+.dl-btn:hover{border-color:var(--cyan)}
+.dl-btn .meta{font-weight:400;color:var(--faint);font-size:12.5px}
+.dl-btn.main-win{background:linear-gradient(135deg,var(--blue),#4f93ff);border:none;color:#fff}
+.dl-btn.main-and{background:linear-gradient(135deg,#13BFD9,var(--cyan));border:none;color:#06222B}
+.dl-note{margin-top:18px;font-size:12.5px;color:var(--faint)}
+@media(max-width:760px){.dl-grid{grid-template-columns:1fr}}
+
+/* 步骤 */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px;counter-reset:s}
+.step{position:relative;padding:30px 26px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius)}
+.step::before{counter-increment:s;content:"0" counter(s);display:block;font-size:40px;font-weight:900;
+  color:transparent;-webkit-text-stroke:1.4px var(--cyan);margin-bottom:14px;letter-spacing:.02em}
+.step h4{font-size:17px;font-weight:700;margin-bottom:8px}
+.step p{color:var(--sub);font-size:14.5px}
+@media(max-width:820px){.steps{grid-template-columns:1fr}}
+
+/* FAQ */
+.faq-list{max-width:800px;margin:44px auto 0}
+.faq{border:1px solid var(--border);border-radius:13px;margin-bottom:13px;background:var(--surface);overflow:hidden}
+.faq summary{list-style:none;cursor:pointer;padding:19px 24px;font-weight:700;font-size:16px;
+  display:flex;justify-content:space-between;align-items:center;gap:14px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .pm{color:var(--cyan);font-size:22px;transition:transform .25s;flex:none}
+.faq[open] summary .pm{transform:rotate(45deg)}
+.faq .ans{padding:0 24px 20px;color:var(--sub);font-size:15px}
+.faq .ans code{background:var(--bg);border:1px solid var(--border);padding:2px 7px;border-radius:6px;
+  font-size:13px;color:var(--cyan)}
+
+/* 页脚 */
+footer{padding:56px 0 40px;border-top:1px solid var(--border);background:#080D16}
+.foot-grid{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;align-items:flex-start}
+.foot-brand{max-width:340px}
+.foot-brand p{color:var(--faint);font-size:13.5px;margin-top:14px}
+.foot-cols{display:flex;gap:56px;flex-wrap:wrap}
+.foot-col h5{font-size:13px;color:var(--sub);margin-bottom:14px;letter-spacing:.06em}
+.foot-col a{display:block;color:var(--faint);font-size:14px;margin-bottom:10px;transition:color .2s}
+.foot-col a:hover{color:var(--cyan)}
+.foot-bottom{margin-top:44px;padding-top:22px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--faint);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ===== 导航 ===== -->
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M4 32c0 0 12-18 28-18s28 18 28 18-12 18-28 18S4 32 4 32z" fill="#22D3EE"/><circle cx="32" cy="32" r="10" fill="#0B1220"/><circle cx="32" cy="32" r="4.5" fill="#2F7CF6"/></svg>
+      极目 <small>JimuControl</small>
+    </a>
+    <nav class="nav-links">
+      <a href="#connect">连接方式</a>
+      <a href="#features">功能</a>
+      <a href="#steps">快速上手</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <a class="nav-cta" href="#download">下载</a>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <svg class="hero-logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M4 32c0 0 12-18 28-18s28 18 28 18-12 18-28 18S4 32 4 32z" fill="#22D3EE"/><circle cx="32" cy="32" r="10" fill="#0A0F1A"/><circle cx="32" cy="32" r="4.5" fill="#2F7CF6"/></svg>
+    <h1>极目</h1>
+    <div class="tag">个人远程控制 · 端到端加密</div>
+    <p class="value">用手机或平板远程控制你的 Windows 电脑：高清画面、声音、键鼠与触屏、文件传输，一切在你自己的设备之间加密完成。支持局域网直连，也能通过 ZeroTier 在任意网络下连接。</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#download" id="hero-win">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4v7.5H3V5.5zm0 13L10.5 19v-6.5H3V18.5zM11.5 3.8L21 2.5V11.5h-9.5V3.8zm0 16.4L21 21.5V13h-9.5v7.2z"/></svg>
+        下载 Windows 版
+      </a>
+      <a class="btn btn-cyan" href="#download" id="hero-and">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.2 6.6l3.1 4.4-6.9 6.9c-.3-.3-.5-.7-.5-1.2V7.7c0-.5.2-.9.5-1.2l3.8.1zm9.6-1.4l-3.6 5.1 3.6 5.1 4.3-2.4c.6-.3.6-1.2 0-1.5l-4.3-2.4v-3.9zm-4.9 6.2L8.4 6.3 3.9 3.8c-.5-.3-1 .1-1 .7v15c0 .6.5 1 1 .7l4.5-2.5 3.5-4.4 4.9 6.9 4.3-2.4-6.9-7.4z"/></svg>
+        下载 Android 版
+      </a>
+      <a class="btn btn-ghost" href="#steps">查看快速上手</a>
+    </div>
+    <div class="hero-meta">
+      <span><i class="dot"></i>完全免费 · 自由使用</span>
+      <span><i class="dot"></i>无需注册账号</span>
+      <span><i class="dot"></i>端到端加密 · 不经第三方服务器</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 连接方式 ===== -->
+<section id="connect">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">两种连接方式</div>
+      <h2 class="title">在家直连，出门也能连</h2>
+      <p class="lead">同一局域网下自动发现、一键连接；不在同一网络时，借助 ZeroTier 组建免费的点对点虚拟网络，依旧直连你的电脑。</p>
+    </div>
+    <div class="conn-grid">
+      <div class="conn-card">
+        <span class="badge">默认 · 低延迟</span>
+        <div class="ico">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 9l2 2-2 2M12 13h4"/></svg>
+        </div>
+        <h3>局域网直连</h3>
+        <p>手机与电脑连接同一个 Wi-Fi 或路由器即可。极目通过 UDP 自动扫描发现电脑，点击免输入 IP，直连延迟最低，适合在家、在办公室使用。</p>
+      </div>
+      <div class="conn-card">
+        <span class="badge">跨网络 · P2P</span>
+        <div class="ico">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>
+        </div>
+        <h3>ZeroTier 跨网段</h3>
+        <p>电脑换了网络、手机用流量，也能像在同一局域网一样连接。ZeroTier 为免费的点对点组网，极目已内置安装包，可一键安装并随软件启停。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 功能 ===== -->
+<section id="features">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">完整能力</div>
+      <h2 class="title">为真实远程操作而做</h2>
+      <p class="lead">不只是看到画面：声音、输入、文件、隐私保护与各类便捷能力，覆盖日常远程使用的完整场景。</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M16 8v3M18.5 6.5v6"/></svg></div>
+        <h4>高清画面与音频</h4>
+        <p>H.264 硬件编解码，弱网下自适应码率与帧率，并实时回传电脑声音。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div>
+        <h4>端到端加密</h4>
+        <p>ChaCha20-Poly1305 加密，访问密钥只存在于你的设备之间，不经过任何服务器。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M12 6v4"/></svg></div>
+        <h4>虚拟鼠标与触屏</h4>
+        <p>悬浮鼠标遥控器高精度移动指针，支持左右键、拖动与滚轮，也可直接触屏操作。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v2H9z"/></svg></div>
+        <h4>剪贴板同步</h4>
+        <p>文字、图片与文件在手机和电脑间双向同步，复制粘贴无缝衔接。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M9 13l6 4-6 4z"/></svg></div>
+        <h4>远程文件传输</h4>
+        <p>浏览电脑磁盘，上传、下载、重命名与复制，支持断点续传和远程文件搜索。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6A3 3 0 0014 13"/><path d="M9.3 5.6A9.7 9.7 0 0112 5c5 0 9 7 9 7a16 16 0 01-2.4 3.2M6 6.6A15 15 0 003 12s4 7 9 7a9 9 0 003.3-.6"/></svg></div>
+        <h4>隐私模式</h4>
+        <p>开启后电脑屏幕黑屏、光标隐藏且本地不可操作，旁人看不到你的远程操作。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8"/><path d="M6.3 6.3a8 8 0 1011.4 0"/></svg></div>
+        <h4>远程唤醒</h4>
+        <p>支持 Wake-on-LAN 网络开机，人在外面也能唤醒家中或办公室的电脑。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg></div>
+        <h4>会话录制</h4>
+        <p>可将远程操作过程录制为 MP4 视频，便于回看、存档与演示。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.7-5.6L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 01-13.7 5.6L4 15.5"/><path d="M4 20v-4.5h4.5"/></svg></div>
+        <h4>断线自动重连</h4>
+        <p>网络波动或切换 Wi-Fi / 流量时自动恢复连接，无需手动重新操作。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="14" height="11" rx="2"/><rect x="9" y="9" width="12" height="10" rx="2"/><path d="M6 7.5h.01M6 11h.01"/></svg></div>
+        <h4>多主机管理</h4>
+        <p>连接过的主机自动保存为列表，密钥加密存储，下次一键重连。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg></div>
+        <h4>完整键盘快捷键</h4>
+        <p>系统输入法支持中文，功能键条含 Ctrl/Alt/Win、方向键与 F1–F12。</p>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M12 8v4M10 10l2 2 2-2"/></svg></div>
+        <h4>电源与屏幕控制</h4>
+        <p>锁屏 / 解锁、显示桌面、切换窗口与多显示器，锁屏后仍可远程解锁。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 下载 ===== -->
+<section class="dl" id="download">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">免费下载</div>
+      <h2 class="title">开始使用极目</h2>
+      <p class="lead">电脑端运行极目作为被控端，手机端安装极目作为主控端，两端使用相同的访问密钥即可连接。</p>
+    </div>
+    <div class="dl-grid">
+      <div class="dl-card win">
+        <div class="dl-head">
+          <div class="os-ico">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5L10.5 4v7.5H3V5.5zm0 13L10.5 19v-6.5H3V18.5zM11.5 3.8L21 2.5V11.5h-9.5V3.8zm0 16.4L21 21.5V13h-9.5v7.2z"/></svg>
+          </div>
+          <h3>Windows 电脑端</h3>
+        </div>
+        <div class="dl-ver">最新版本 <b id="win-ver">读取中…</b></div>
+        <div class="dl-actions">
+          <a class="dl-btn main-win" id="win-exe-btn" href="https://github.com/haoeastspeed/jimuControl/releases">
+            <span>下载可执行程序（推荐）</span><span class="meta" id="win-exe-meta"></span>
+          </a>
+          <a class="dl-btn" id="win-zip-btn" href="https://github.com/haoeastspeed/jimuControl/releases">
+            <span>下载 zip 便携版</span><span class="meta">免安装</span>
+          </a>
+        </div>
+        <div class="dl-note">单文件绿色程序，支持 Windows 10 / 11 64 位；可最小化到托盘，也可安装为系统服务随开机启动。</div>
+      </div>
+      <div class="dl-card android">
+        <div class="dl-head">
+          <div class="os-ico">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M7.2 6.6l3.1 4.4-6.9 6.9c-.3-.3-.5-.7-.5-1.2V7.7c0-.5.2-.9.5-1.2l3.8.1zm9.6-1.4l-3.6 5.1 3.6 5.1 4.3-2.4c.6-.3.6-1.2 0-1.5l-4.3-2.4v-3.9zm-4.9 6.2L8.4 6.3 3.9 3.8c-.5-.3-1 .1-1 .7v15c0 .6.5 1 1 .7l4.5-2.5 3.5-4.4 4.9 6.9 4.3-2.4-6.9-7.4z"/></svg>
+          </div>
+          <h3>Android 主控端</h3>
+        </div>
+        <div class="dl-ver">最新版本 <b id="and-ver">读取中…</b></div>
+        <div class="dl-actions">
+          <a class="dl-btn main-and" id="and-btn" href="https://github.com/haoeastspeed/jimuControl/releases">
+            <span>下载 APK 安装包</span><span class="meta" id="and-meta"></span>
+          </a>
+        </div>
+        <div class="dl-note">支持 Android 7.0（API 24）及以上。安装时如被拦截，请在系统设置中允许「安装未知来源应用」。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 快速上手 ===== -->
+<section id="steps">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">三步上手</div>
+      <h2 class="title">几分钟即可连接</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <h4>电脑端运行极目</h4>
+        <p>在 Windows 上下载并运行极目，软件默认自动启动服务；需要跨网络时可在界面内一键安装 ZeroTier。</p>
+      </div>
+      <div class="step">
+        <h4>手机安装并打开极目</h4>
+        <p>在 Android 手机安装 APK 后打开，软件会自动扫描局域网内的电脑，也可手动填写电脑的 IP 地址。</p>
+      </div>
+      <div class="step">
+        <h4>输入相同密钥并连接</h4>
+        <p>两端填写一致的访问密钥（至少 6 位），在局域网或 ZeroTier 网络下点击连接，即可开始远程控制。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section id="faq">
+  <div class="wrap">
+    <div class="center">
+      <div class="eyebrow">常见问题</div>
+      <h2 class="title">你可能想了解</h2>
+    </div>
+    <div class="faq-list">
+      <details class="faq">
+        <summary>极目收费吗？需要注册账号吗？<span class="pm">+</span></summary>
+        <div class="ans">极目完全免费，公开提供、可自由使用与传播，无需注册或登录账号，也不收集个人信息。</div>
+      </details>
+      <details class="faq">
+        <summary>电脑换了网络、不在同一局域网还能连吗？<span class="pm">+</span></summary>
+        <div class="ans">可以。开启 ZeroTier 跨网段组网后，即使电脑和手机处于不同网络（包括手机使用流量），也能像在同一局域网一样直连。两端需安装 ZeroTier 并加入同一个网络。</div>
+      </details>
+      <details class="faq">
+        <summary>远程画面安全吗？数据会经过别人的服务器吗？<span class="pm">+</span></summary>
+        <div class="ans">远程内容采用 ChaCha20-Poly1305 端到端加密，访问密钥仅存在于你自己的设备之间。ZeroTier 只负责点对点组网与连接建立，无法读取你加密后的画面与操作内容。</div>
+      </details>
+      <details class="faq">
+        <summary>手机和电脑都要安装 ZeroTier 吗？<span class="pm">+</span></summary>
+        <div class="ans">仅在跨网络连接时需要，且两端都要开启 ZeroTier 并加入同一网络；如果手机和电脑在同一个 Wi-Fi / 局域网内，使用默认的局域网直连即可，无需 ZeroTier。</div>
+      </details>
+      <details class="faq">
+        <summary>隐私模式有什么作用？<span class="pm">+</span></summary>
+        <div class="ans">开启隐私模式后，电脑本地屏幕黑屏、鼠标光标隐藏且本地无法操作，而你在手机上仍可正常看到并控制电脑，适合在公共环境或不希望旁人看到操作内容时使用。</div>
+      </details>
+      <details class="faq">
+        <summary>需要开放哪些端口或防火墙设置吗？<span class="pm">+</span></summary>
+        <div class="ans">默认使用 TCP <code>49160</code> 建立连接、UDP <code>49161</code> 做局域网自动发现。首次运行时软件会自动添加防火墙放行，一般无需手动配置。</div>
+      </details>
+      <details class="faq">
+        <summary>安卓 App 如何安装与升级？<span class="pm">+</span></summary>
+        <div class="ans">下载 APK 后点击安装，若系统提示拦截，请允许对应浏览器或文件管理器「安装未知来源应用」。升级时可在 App 内使用检查更新，或下载最新 APK 直接覆盖安装，主机与密钥信息会保留。</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 页脚 ===== -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top">
+          <svg width="28" height="28" viewBox="0 0 64 64"><path d="M4 32c0 0 12-18 28-18s28 18 28 18-12 18-28 18S4 32 4 32z" fill="#22D3EE"/><circle cx="32" cy="32" r="10" fill="#0B1220"/><circle cx="32" cy="32" r="4.5" fill="#2F7CF6"/></svg>
+          极目 <small>JimuControl</small>
+        </a>
+        <p>个人远程控制软件。免费公开、自由使用；程序源代码为私有，未获授权不提供源码。</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h5>下载</h5>
+          <a href="https://github.com/haoeastspeed/jimuControl/releases">Windows 版</a>
+          <a href="https://github.com/haoeastspeed/jimuControl/releases">Android 版</a>
+          <a href="https://github.com/haoeastspeed/jimuControl/releases">全部发布版本</a>
+        </div>
+        <div class="foot-col">
+          <h5>资源</h5>
+          <a href="update.json">更新清单 update.json</a>
+          <a href="#steps">快速上手</a>
+          <a href="#features">功能介绍</a>
+        </div>
+        <div class="foot-col">
+          <h5>帮助</h5>
+          <a href="#faq">常见问题</a>
+          <a href="#connect">连接方式</a>
+          <a href="#download">下载</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 极目 JimuControl · 免费公开 · 自由使用</span>
+      <span>本站与更新文件托管于 GitHub Pages / GitHub Releases</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  function fmt(n){
+    if(!n || n<=0) return "";
+    var mb=n/1048576;
+    return mb>=1 ? mb.toFixed(1)+" MB" : Math.max(1,Math.round(n/1024))+" KB";
+  }
+  function setMeta(id,t){ var e=document.getElementById(id); if(e) e.textContent=t; }
+  fetch("update.json",{cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(j){
+      var w=j.windows, a=j.android;
+      if(w){
+        var v=document.getElementById("win-ver"); if(v&&w.version) v.textContent="v"+w.version;
+        var we=document.getElementById("win-exe-btn"); if(we&&w.url) we.href=w.url;
+        setMeta("win-exe-meta",fmt(w.size));
+        var zw=document.getElementById("win-zip-btn");
+        if(zw){ if(w.zipUrl){ zw.href=w.zipUrl; } else if(w.url){ zw.href=w.url.replace(/\.exe$/i,".zip"); } }
+        var hw=document.getElementById("hero-win"); if(hw&&w.url) hw.href=w.url;
+      }
+      if(a){
+        var av=document.getElementById("and-ver"); if(av&&a.versionName) av.textContent="v"+a.versionName;
+        var ae=document.getElementById("and-btn"); if(ae&&a.apkUrl) ae.href=a.apkUrl;
+        setMeta("and-meta",fmt(a.size));
+        var ha=document.getElementById("hero-and"); if(ha&&a.apkUrl) ha.href=a.apkUrl;
+      }
+    })
+    .catch(function(){
+      var wv=document.getElementById("win-ver"), av=document.getElementById("and-ver");
+      if(wv) wv.textContent="请前往发布页";
+      if(av) av.textContent="请前往发布页";
+    });
+})();
+</script>
+
+
+</body>
+</html>

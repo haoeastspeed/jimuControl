@@ -1,0 +1,4 @@
+_shots/
+.dist/
+*.tmp
+.DS_Store
