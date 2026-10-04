@@ -1,0 +1,28 @@
+{
+  "schema": "jimu-update-1",
+  "app": "JimuControl",
+  "generated": "2026-10-04",
+  "android": {
+    "versionCode": 29,
+    "versionName": "1.18.1",
+    "apkUrl": "https://github.com/haoeastspeed/jimuControl/releases/download/android-v1.18.1/jimu-android-v1.18.1.apk",
+    "size": 6980198,
+    "sha256": "CB3431FF623DB03DB101DB8AE938EBEEE9ED0726C8035EB146DF3DEDC407BAE6",
+    "notes": [
+      "自动更新内置官方多更新源（GitHub Pages 主源 + 备用源），无需手动配置",
+      "下载后校验 SHA-256 并引导安装",
+      "更新清单解析更健壮，支持多源依次尝试与嵌套结构"
+    ]
+  },
+  "windows": {
+    "version": "1.7.1",
+    "url": "https://github.com/haoeastspeed/jimuControl/releases/download/windows-v1.7.1/jimu-windows-v1.7.1.exe",
+    "size": 14009856,
+    "sha256": "7C06BB93133186FB58BAEC6B987060DF291C0E4E4ADFC9C112F67071E49F6E34",
+    "zipUrl": "https://github.com/haoeastspeed/jimuControl/releases/download/windows-v1.7.1/jimu-windows-v1.7.1.zip",
+    "notes": [
+      "内置自动更新：启动后自动检查，也可在界面手动检查",
+      "下载后校验 SHA-256，自动完成替换并重启服务与界面"
+    ]
+  }
+}
